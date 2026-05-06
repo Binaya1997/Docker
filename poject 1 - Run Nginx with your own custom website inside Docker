@@ -1,0 +1,59 @@
+Goal
+
+You will:
+
+Create a simple HTML page
+Run Nginx container
+Serve your custom site in browser
+
+
+Step 1: Create a custom website
+
+Inside your  VM:
+
+mkdir mysite
+cd mysite
+nano index.html
+
+Paste this inside the index.htm:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My First Docker Website</title>
+</head>
+<body>
+    <h1>Hello from Docker 🚀</h1>
+    <h2>Deployed by <user_name></h2>
+</body>
+</html>
+
+Save:
+
+Press CTRL + X
+Press Y
+Press Enter
+
+Step 2: Run Nginx with your website
+
+docker run -d \
+--name my-nginx \
+-p 8080:80 \
+-v $(pwd):/usr/share/nginx/html \
+nginx
+
+under standing below  command does
+
+-p 8080:80 → expose Nginx to browser
+-v $(pwd):/usr/share/nginx/html → mount your folder into container
+
+Step 3: Open in browser
+
+http://<your-vm-ip>:8080
+
+Result:
+
+it shudl show you wbsite.
+
+
+
