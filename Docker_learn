@@ -1,0 +1,984 @@
+	• Docker is an open platform for developing, shipping, and running applications. Docker provides the ability to package and run an application in a loosely isolated environment called a container. The isolation and security let you run many containers simultaneously on a given host. 
+
+	• Containers are lightweight and contain everything needed to run the application, so you don't need to rely on what's installed on the host. You can share containers while you work, and be sure that everyone you share with gets the same container that works in the same way.
+
+
+Consider the following example scenario:
+
+	• Your developers write code locally and share their work with their colleagues using Docker containers.
+	• They use Docker to push their applications into a test environment and run automated and manual tests.
+	• When developers find bugs, they can fix them in the development environment and redeploy them to the test environment for testing and validation.
+	• When testing is complete, getting the fix to the customer is as simple as pushing the updated image to the production environment.
+
+
+
+	Key Differences at a Glance
+	Feature 	Docker (Containers)	Virtual Machine (VM)
+	Virtualization Level	OS-level: Shares the host OS kernel.	Hardware-level: Virtualizes the entire machine.
+	Size	Lightweight: Typically megabytes (MB).	Heavyweight: Typically gigabytes (GB).
+	Startup Time	Seconds or Milliseconds: Starts like a process.	Minutes: Requires booting a full OS.
+	Isolation	Lower: Shared kernel; process-level isolation.	Higher: Entirely separate guest OS.
+	Portability	High: Runs anywhere with Docker installed.	Medium: Tied to specific hypervisors.
+	
+	Core Architecture
+	
+	• Docker Containers: Containers sit on top of a physical server and its host OS. They share the OS kernel and use an Execution Engine (like Docker Engine) to run isolated application processes.
+	• Virtual Machines: VMs run on a Hypervisor (such as VMware) that creates and manages virtual hardware. Each VM includes its own complete Guest Operating System, which consumes significant RAM and CPU even when idle. 
+
+Why we need docker ?
+
+
+	We need Docker because it solves the critical problem of software behaving differently across different environments. By packaging an application with all its dependencies into a single, standardized unit called a container, Docker ensures consistency, efficiency, and speed throughout the development lifecycle. 
+	
+	Key reasons for using Docker include:
+	• Eliminates the "It Works on My Machine" Problem: Docker ensures that an application runs exactly the same way on a developer's laptop, a test server, or in a production cloud environment.
+	• Consistent Environments: It provides a predictable, isolated environment for every stage of development, which prevents conflicts between different language stacks or software versions.
+	• Resource Efficiency: Unlike traditional virtual machines (VMs) that require a full guest OS, Docker containers share the host's operating system kernel. This makes them significantly more lightweight, faster to start, and capable of running more workloads on the same hardware.
+	• Simplified Deployment and Scaling: Docker's portable nature allows applications to be deployed seamlessly across various platforms, including Amazon Web Services (AWS), Google Cloud, or on-premises servers. It also enables rapid horizontal scaling to handle traffic spikes.
+	• Enhanced Productivity: Developers can quickly spin up complex environments (like a database or web server) with a single command using tools like Docker Compose. This reduces onboarding time for new team members from weeks to days.
+	• Isolation and Security: Each container is an isolated unit, meaning a failure or security vulnerability in one application is less likely to affect others running on the same host.
+	• CI/CD Integration: Docker is the industry standard for Continuous Integration and Continuous Deployment (CI/CD), allowing teams to ship software up to 7x more frequently by automating the build, test, and release process.
+
+
+	Docker Architecture
+
+	Docker uses a client-server architecture. The Docker client talks to the Docker daemon, which does the heavy lifting of building, running, and distributing your Docker containers. The Docker client and daemon can run on the same system, or you can connect a Docker client to a remote Docker daemon. The Docker client and daemon communicate using a REST API, over UNIX sockets or a network interface. Another Docker client is Docker Compose, that lets you work with applications consisting of a set of containers.
+
+
+	
+	The Docker daemon
+	
+	The Docker daemon (dockerd) listens for Docker API requests and manages Docker objects such as images, containers, networks, and volumes. A daemon can also communicate with other daemons to manage Docker services.
+	
+	The Docker client
+	
+	The Docker client (docker) is the primary way that many Docker users interact with Docker. When you use commands such as docker run, the client sends these commands to dockerd, which carries them out. The docker command uses the Docker API. The Docker client can communicate with more than one daemon.
+	
+	Docker registries
+	
+	A Docker registry stores Docker images. Docker Hub is a public registry that anyone can use, and Docker looks for images on Docker Hub by default. You can even run your own private registry.
+	
+	When you use the docker pull or docker run commands, Docker pulls the required images from your configured registry. When you use the docker push command, Docker pushes your image to your configured registry.
+
+Docker Image
+	
+	An image is a read-only template with instructions for creating a Docker container.
+
+You might create your own images or you might only use those created by others and published in a registry. To build your own image, you create a Dockerfile with a simple syntax for defining the steps needed to create the image and run it. Each instruction in a Dockerfile creates a layer in the image. When you change the Dockerfile and rebuild the image, only those layers which have changed are rebuilt. This is part of what makes images so lightweight, small, and fast, when compared to other virtualization technologies.
+
+Docker Container
+
+
+	• A container is a runnable instance of an image. You can create, start, stop, move, or delete a container using the Docker API or CLI. 
+	
+	• You can connect a container to one or more networks, attach storage to it, or even create a new image based on its current state.
+	
+	• a container is relatively well isolated from other containers and its host machine. 
+	
+	• A container is defined by its image as well as any configuration options you provide to it when you create or start it. When a container is removed, any changes to its state that aren't stored in persistent storage disappear.
+	
+	
+	*** Docker uses a technology called namespaces to provide the isolated workspace called the container. When you run a container, Docker creates a set of namespaces for that container.***
+	
+	
+	Docker Client
+
+	The Docker client (docker command) is the primary command-line interface (CLI) that allows users to interact with the Docker daemon (dockerd). It sends commands (e.g., build, run, pull) via a REST API to the daemon, which manages container lifecycles, images, networks, and volumes.
+	
+	Docker Registry
+	Docker Registry is a centralized storage and distribution system for container images, acting as a library where developers can share, version, and manage their applications. 
+	
+	Types of Docker Registries
+	
+	• Public Registries: Accessible to everyone, the most prominent example is Docker Hub, which serves as the default registry for the Docker engine.
+	
+	• Private Registries: Restricted to specific users or organizations. These are used to store proprietary code and internal tools securely.
+	
+	• Cloud-Managed Registries: Hosted services provided by cloud vendors that offer high availability and deep integration with their ecosystems, such as Amazon Elastic Container Registry (ECR), Google Container Registry (GCR), and Azure Container Registry (ACR).
+
+	• Self-Hosted Registries: Organizations can run their own registry using the open-source Distribution (formerly Docker Registry) or enterprise solutions like Harbor and JFrog Artifactory. 
+	
+	
+	Registry vs. Repository: A registry is the service hosting the data, while a repository is a collection of different versions (tags) of a specific image within that registry.
+
+	
+	Commands:
+
+	docker --version (To see the version)
+
+docker ps (To see the running container)
+	docker ps -a (To see all stoped and running container)
+	
+	docker images (to see all the images details which is in the current server)
+	
+	docker pull <image_name> ( to pull the docker image from the registry{docker hub})
+
+docker run ( is used to pull and start a container if image is not present, if the image is present, it will start a container)
+
+docker run [option] {images_name}
+	
+	Ex:
+	
+docker run -d ubuntu
+	
+	Option: -d -> is used to run a container in detach mode
+	              -p -> is used for port mapping 8080:80
+	              --name -> to give custom name
+	              -it ubuntu bash -> (it)interactive 
+	             -e API_KEY=1234 node variable (environment)
+
+container port and host port:
+	
+	• Multiple container can on your host machine.
+	• Your laptop has only certain ports available.
+	• Conflict when same port on host machine.
+
+step for port binding:
+	
+	• Stop the container
+	• Change the port with port binding option and run the container.
+	• Check the docker process,
+	
+docker start <container_ID> to start a container
+
+docker stop <container_ID>to stop a container 
+	
+	Docker exec - to execute the command in running container
+	
+	docker exec [option] {container_id} [command]
+	
+Ex:
+	
+	docker run --name mycontainer -d -i -t alpine /bin/sh
+	
+	docker exec my-ngnix ls /usr/share/nginx/html
+	
+	docker exec -it my-nginx bash (Open interactive bash shell inside container)
+	
+	 Docker log
+	
+	docker logs my-nginx (show all output stdout and stderr from the container)
+	
+	       -f -> Follow logs in real time.
+	       --tail 50 -> Last 50 lines only
+	       --since 10 m -> Logs from last 10 min.
+	       -f --tail 20 -> Follow last 20 lines
+	
+	Docker Inspect : Get complete container info
+	
+	It will show all the details about container like, network Setting(Ip address, ports), volume mount and storage environment variable, Resources limits container state and status, image details.
+	
+	Format:
+	
+	Docker inspect --format='{{.Network+.IPAddress}}' my-nginx
+	
+	
+	Docker file
+	
+	Text file - A text file named Dockerfile (no extension) containing build instruction.
+	
+	Step by step recipe -> For creating docker image.
+	
+	Layers-> Each instruction creates a layer in the images.
+	
+	Simple-> Written in a simple, declarative syntax.
+	
+	Reproducible -> Automated and reproducible - same docker file builds the image.
+	
+	Ex:
+	
+	FROM Ubuntu:20.4
+	RUN apt-get update
+	RUN apt-get install python3
+	CMD ["python"]
+	
+	Essential Docker file instructions Part-1
+	
+	 1. FROM - Starting point (base image)
+	 
+	      FROM node:18
+	      #start from official Node.Js 18 image
+	
+	2.WORKDIR- Set working Directory
+	
+	    WORKDIR /app
+	    #All subsequent command run in /app
+	
+	3.COPY- Copy files from host to container
+
+            Copy package.json /app/
+            copy . /app/
+            #Copy file into the image
+
+
+
+      Essential Dockerfile Instruction - Part 2
+
+	RUN -Execute commands during image build
+	
+	RUN npm install 
+	RUN apt-get update && apt-get install -y curl
+	#Runs at build time
+	
+	CMD - Default command when container starts
+	
+	CMD ["node","app.js"]
+	#Runs at RUNTIME (container start)
+	
+	EXPOSE 3000
+	#Informs docker that container listens port 3000.
+	
+    Environment variable and build argument
+	
+	ENV - Set environment variable (available at runtime)
+	
+	ENV NODE_ENV=production
+	ENV PORT=3000
+	#Available in running container
+	
+	ARG - Build-time variable(only during build)
+	
+	SRG VERSION=1.0
+	RUN echo "Building version $VERSION
+	#only available during docker build
+	
+	Key different
+	
+	ENV=Runtime variable (in running container)
+	ARG=Build-time variable(during image creation)
+	
+	
+	Best Practice -Layer optimization
+	
+*Bad-multiple layer
+	
+	RUN apt-get update
+	RUN apt-get install -y curl
+	RUN apt-get install -y git
+	
+	#Creates 3 layers
+	
+	^Good-Combined into one layer
+ 
+	RUN apt-get update && \
+	         apt-get install -y curl git && \
+	         rm-rf /var/lib/apt/lists/*
+	
+	#Create layer, smaller image
+
+Best practice-order matters-optimize Build case
+	
+	Bad order :
+	
+	FROM node:18
+	COPY . /app
+	RUN npm install
+
+	#Any code change invalidates cache, reinstall dependencies.
+
+Good Order:
+	
+          FROM node:18
+          COPY package.json /app/
+          RUN npm install
+          COPY . /app
+
+         #only reinstall if package,json changes
+
+
+Building Images-Creating Images from Dockerfiles
+
+Syntax:
+
+docker build -t myapp:1.0 .
+
+	
+	Breaking it down :
+	
+	• docker build : Command to build an image
+	• -t myapp:1.0 : tag the image with name and version
+	• . : build context (current directory containing Dockerfile)
+
+What happens:
+
+	1. Docker reads the Dockerfile
+	2. Executes each instruction in order
+	3. Creates layers for each instruction 
+	4. Produces final image with specified tag.
+	
+	
+	Understanding Build Context
+
+Build Context = all files in the specified directory
+	
+	Docker build - t myapp .
+	#Send entire current directory to docker daemon
+	
+	Problem: Large context = slow  builds
+	
+	→ node modules/ # Don't need this!
+	→ .git                       # Don't need this!
+	→ logs/                    # Don't need this!
+	→ Dockerfile
+	→ src
+
+Solution: .dockerignore file
+
+node_modules
+.git
+*.log
+.env
+
+Image Naming and Versioning You Images With Tags
+
+Tag format:
+
+[Registry/]NAME[:version]
+
+Ex:
+
+myapp  # name only, version
+to 'latest'
+myapp:1.0 # name with specific version
+myapp:1.0.5 # semantic versioning
+nginx:alpine # variant tags
+username/myapp:1.0 # with username for Docker Hub
+
+Best practices:
+
+Use sementic versioning (1.0.0, 1.0.1, 2.0.0)
+Avoid replying on 'latest' tag in production
+Tag for environments: myapp:dev, myapp:prod
+
+Managing Local Images
+
+List all images: docker images or docker image ls 
+
+Remove an image: docker rmi myapp:1.0 or docker image rm myapp:1.0
+
+Remove unused images: docker image prune # Remove dangling images
+
+docker imaage prune -a # Remove all unused images
+
+
+Instruction to Docker Hub
+
+What is Docker Hub?
+
+The default public registry for Docker images.
+
+Like Github for Docker images.
+
+Host official images(Ubuntu, Node, Python, etc.)
+
+Free for public images, paid for  private image.
+
+Why we use Docker Hub
+
+Share image with you team.
+
+Distribute open source projects
+
+Store images for deployment.
+
+Pushing Images to Docker Hub
+ 
+Login to Docker hub
+
+docker login #Enter username and password
+
+Tag image with your username
+
+docker tab myapp:1.0 username/myapp:10
+
+Push to Docker Hub
+
+docker push username/myapp:1.0
+
+
+Complete Image Lifecycle-From Dockerfile to Deployment
+
+1: Write the Docker file : vim Dockefile
+2: Build image : docker build -t <image_name>
+3: Test locally : docker run -p 8080:80 <image:name>
+4: Tag for Docker Hub : docker tag <image_name> username/<image_name>
+5: Push to registry : docker push username/<image_name>
+6: Pull on another machine : docker pull username/myapp:1.0
+7. Deploy : docker run -d -p 80:3000 username/myapp:1.0
+
+Why Container Lose Data ?
+
+Containers are ephemeral by design:
+
+Example problem:
+
+docker run -d --name db mysql # Database stores data inside container
+
+docker rm -f db # Container delete = all database data Lost!
+
+We need : A way to store data outside the container so it survives container deletion
+
+
+Docker Storage Options Overview 
+
+Three Ways to presist Data
+
+	1. Volumes (Recommended) 
+
+	•     Managed by Docker
+	•     Stored in Docker's storage area
+	•     Independent of container lifecycle
+
+   2.  Bind Mount
+
+	• Mount a host directory into container 
+	• Direct access to host filesystem
+	• Good for development
+
+   3.  tmpfs Mount (Linux only)
+
+	• Stored in host memeory
+	• Never written to disk
+	• Temporary for sensitive data
+	
+	
+Creating and Using Volumes
+
+    Create a volume : docker volume create <volume_name>
+
+    Use volume with a container : docker run -d \
+                                                           --name db \
+                                                           -v my-data:/var/lib/mysql \
+                                                           mysql
+
+What happens:
+
+	•      Volume my-data is mounted to /var/lib/MySQL in the container
+	•      MySQL stores data in /var/lib/MySQL
+	•      Data is actually stored in the volume, outside the container
+	•      Container can be deleted, data remains in volume.
+
+
+Managing Volumes
+
+List all volume : docker volume ls
+
+Inspect volume details : docker volume inspect my-data (#Shows: mount point, driver, creation time)
+
+Remove a volume : docker volume rm my-data #Only works if no container is using it
+
+Removed unused volumes : docker volume purne #Delete all volume not used by any container
+
+Anonymous vs Named Volumes
+
+Named volumes: 
+
+docker run -v my-data:/var/lib/mysql mysql
+
+# Explicit name: "my-data"
+# Easy to reference and reuse
+
+Anonymous volumes:
+
+docker run -v /var/lib/mysql mysql
+
+#Docker generates random name
+#Harder to manage
+
+Best practice: Always use name volume for important data
+
+Why ? Named volumes are easy
+
+	• Reference in commands
+	• Share across container
+	• Backup and restore
+	• Identify and manage
+
+Practical Volume Example
+
+Senario: Running MySQL with persistent data
+
+1.Create named volume: docker volume create mysql-data
+
+2.Run MySQL with volume : docker run -d \
+                                               --name mysql-db \
+                                              -e MYSQL_ROOT_PASSWORD=secret \
+                                              -v mysql-data:/var/lib/mysql \
+                                              mysql:8
+
+3.Stop and remove container: docker stop mysql-db
+                                                   docker rm mysql-db
+
+4.Start new container with same volume : docker run -d \
+                                                                         --name mysql-db-v2 \
+                                                                         -e MYSQL_ROOT_PASSWORD=secret \
+                                                                         -v mysql-data:/var/lib/mysql \
+                                                                         mysql:8
+
+Data still there ! Volume preserved everything
+
+Understanding Container Networking
+
+By default, containers are isolated
+
+	• Each container has its own network namespace
+	• Containers can't communicate with each other automatically
+	• Container can't be accessed from outside without configuration
+
+What we need:
+
+	• Containers to access the internet (for updates, APIs)
+	• Container to communicate with each other (web app -> databse)
+	• External access to container (user accessing your web app)
+
+Docker Provides:
+
+	• Built in networking solutions to handle all of this
+
+Default Bridge Network 
+
+How it works
+
+Every container gets:
+
+	• Automatically connect to default bridge.
+	• Its own IP address (typically 172.17.0.x range)
+	• Access to internet through host
+	• Needs -p flag for external access
+
+Example:
+
+docker run -d --name web nginx
+docker run -d --name db mysql
+
+# Both on default bridge
+# Can communicate via IP, but Not by name
+# No external access unless ports mapped
+
+Limitation : No automatic DNS - must use IP address
+
+
+Custom Bridge Networks
+
+Create a custom network:
+
+docker network create <network_name>
+
+Run container on this network:
+
+docker run -d --name db --network <network_name> mysql
+docker run -d --name web --network <network_name> nginx
+
+# Now containers can communicate by name!
+# Web container can reach db at hostname "db"
+
+Key advantage:
+
+Automatic DNS resolution by container name
+
+Example :
+
+Web app connects to database at mysql://db:3306
+
+
+Host Network Mode - Direct Host Access
+
+Syntax:
+
+docker run -d --network host nginx
+
+Behaviour:
+
+Container uses host's network directly
+No network isolation
+Container ports=host ports (no -p needed)
+Highest network performance
+
+Use cases:
+
+Performance-critical applications
+Network monitoring tools
+When you need access to host network interfaces. 
+
+Limitation : Only works on Linux hosts, port conflicts possible
+
+Network Management Command
+
+List all networks : docker network ls
+
+Inspect network details : docker network inspect <network_name> (shows connected container, IP ranges, driver info)
+
+Connect running container to network : docker network connect <network_name> <container_name>
+
+Disconnected from network : docker network disconnect <network_name> <container_name>
+
+Remove network: docker network rm <network_name> 
+
+
+Practical Multi-Container Example Web App + Database Communication
+
+Create custom network : docker network create app-network
+
+Run database on network : docker run -d --name postgrss-db --network app-network -e POSTGRES_PASSWORD=secret postgres
+
+Run web app on same network: docker run -d --name web-app --network app-network -p 8080:80 -e DATABASE_URL=postgress://postgres-db:5432 MY-web-app
+
+-> Web app connects to databse using hostname "postgres-db"
+-> External user access web app at localhost:8080
+
+
+The problem Docker Compose Solves
+
+Without Docker Compose:
+
+# Create network
+docker network create app-net
+
+# Run database
+docker run -d --name db --network app-net -v db-data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=secret mysql
+
+#Run Redis
+Docker run -d --name cache --network app-net redis
+
+#Run web app
+Docker run -d --name web --network app-net -p 8080:80 -e DB_HOST=db -e REDIS_HOST=cache my-app
+
+Problem: Long commands, manual order, error-phone, hard to share
+
+What is Docker Compose ?
+
+Docker Compose is :
+
+A tool for defining and running multi-container applications.
+Uses a YMAL file (docker-compose.yml) for configuration.
+Manages containers, networks, and volumes together.
+Single command to start entire application stack.
+
+Declarative : Describe what you want, not how to do it
+
+Reproducible: same file work everywhere
+
+Shareable: Commit to Git, teammates get identical setup
+
+Simple: docker compose up starts everything
+
+Docker Compose File Structure
+
+services-your containers.
+
+Volume-persistent storage 
+
+Network-custom network(optional)
+
+Basic structure:
+
+version: '3.8'
+
+services:
+  web:
+        image: nginx
+        ports:
+             - "8080:80"
+  
+   db:
+        image: mysql:8
+        environment:
+             MYSQL_ROOT_PASSWORD: secret
+         volumes:
+              - db-data:/var/lib/mysql
+
+volumes:
+          db-data:
+
+
+
+Essential Docker Compose Commands
+
+Start application: 
+
+docker compose up
+#start all services, show logs
+
+docker compose up -d
+# Detached mode, runs in background
+
+Stop application:
+
+docker compose down
+# Stops and removes containers, networks
+# volume are preserved
+
+View running services:
+
+docker compose ps
+
+Stop application:
+
+docker compose down
+
+# stop and removes containers, networks
+# Volume are preserved
+
+View running services:
+
+docker compose ps
+
+View logs:
+
+docker compose logs
+docker compose logs web # Logs for specific service
+docker compose logs -f # Follow logs
+
+Building Custom Images with Compose
+
+Using pre-built images:
+
+services:
+    Web:
+          image: nginx:latest
+
+Building from Dockerfile:
+
+     services:
+         api:
+             build: . # Build form Dockerfile in current directory
+
+Build with context and dockerfile:
+
+    services:
+        api:
+             build:
+                  context: ./api
+                   dockerfile: Dockerfile.prod
+
+Rebuild images:
+
+docker compose build
+Docker compose up --build # build then start
+
+Environment Variables and Overrides
+
+In docker-compose.yml:
+
+services:
+    api:
+         environment:
+               - NODE_ENV=production
+               - API_KEY=${API_KEY} # From host environment
+
+Using .env file:
+
+# .env file
+API_KEY=abc123
+DATABASE_PASSWORD=secret
+
+Compose automatically loads .env file
+
+Multiple compose files
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+Override setting for different environments
+
+Why Configuration Matters
+
+Every application needs configuration:
+
+	• Database connection strings
+	• API keys and tokens
+	• Service URLs and endpoints
+	• Feature flag and settings
+	• Passwords and credentials
+
+Bad practices:
+
+	­ Hardcoding values in code 
+	­ Committing secrets to Git
+	­ Same config for all environments
+
+Good practice:
+
+	² Externalize configuration
+	² Different config per environment
+	² Secure handling of sensitive data
+	
+	
+Environment Variable Basic - Passing Configuration to containers
+
+Three ways to set environment variables:
+
+1. Command line with -e:
+
+      docker run -e
+      DATABASE_URL=postgres://db:5432 my -app
+      docker run -e API_KEY=abc123 -e
+      NODE_ENV=PRODUCTION my-app
+
+	2. Environment file with --env-file:
+	 
+	Docker run --env-file .env my-app
+	
+   3. In Dockerfile with ENV:
+
+          ENV NODE_ENV=production
+          ENV PORT=3000
+
+Inside container: Apps read these as regular environment variables
+
+
+Security Risk with Environment Variables
+
+Understanding the Dangers
+
+Environment variables are not secure for sensitive data:
+
+Why?
+
+	• Visible in docker inspect output
+
+	• Visible in container logs
+
+	• Passed to child processes
+
+	• Can leak in error messages
+
+	• Stored in image layers if set in Dockerfile
+
+docker inspect my-container
+
+# Show all environment variables including password!
+
+Use environment variable for:
+
+Non-sensitive configuration
+
+Use secrete for:
+
+Passwords, API keys, Certificates
+
+Practical Secret management Strategies
+
+	1. Development:
+
+	• Use .env files not committed to Git)
+
+	• Simple environment variables for non-sensitive data
+
+	• Mock/fake credential for local testing
+
+	2. Production:
+
+	• Use Docker Secrets (if using Swarm)
+
+	• Or cloud provider secret managers (AWS Secrets Manager, Azure Key Valut)
+
+	• Or HarshiCrop vault for advanced needs
+
+	• Never expose secret in logs or error messages
+
+	3. General rules:
+
+	• Add ,env to .gitignore
+	
+	• Use different secrets per environment
+	
+	• Rotate secrets regularly
+	
+	• Minimal secret access( only what's needed)
+	
+	
+	Complete Example with Environment Variables
+	
+	.env file (not in Git):
+	
+	DB_PASSWORD=prod_secrete_passsword
+	API_KEY=real_api_key_123
+	REDIS_PASSWORD=redis_secure_pass
+	
+	docker-compose.yml (in Git):
+	
+	Version: '3.8'
+	
+	services:
+	     web:
+	     build: ./web
+	     environment:
+	      - NODE_ENV=production
+	      - DATABASE_URL=postgres://postgress:${DB_PASSWORD}@db:5432/myapp
+	      - REDIS_URL=REDIS://:$(REDIS_PASSWORD)@CACHE:6379
+	      - API_KEYS=$(API_KEY)
+	      DEPENDS_ON:
+	      - db
+	      - cache
+	
+	db:
+	Image: postgres:15
+	environment:
+	POSTGRES_PASSWORD:$(DB_PASSWORD)
+	
+	cache:
+	Image: redis:alpine
+	command: redis-server --require pass $(REDIS_PASSWORD)
+	
+	The Production Reliability Problem
+	
+	RUNNING vs Actually Working
+	
+	The Problem:
+	
+	A container can be "running" but the application inside is broken
+	
+	Database is up but, not accepting connections
+	Wb server running but returning 500 errors
+	Application deadlocked or infinite loop
+	
+	Container status shows "Up" but user can't access the service!
+	
+	What we need 
+	
+	1. Healthchecks - Verify the application is actually working
+	2. Restart Policies - Automatically recover from failures
+
+Without these : Manual intervention required for every failure
+
+Docker Restart Policies
+
+Four restart policies:
+
+no(default) : Never restart automatically :- docker run --restart=no nginx
+
+On-failure : Restart only if container exits with error (non-zero exit code) :- docker run --restart=on-failure nginx 
+
+always: Always restart, even if stopped manually (restart on daemon startup) :- docker run --restart=always nginx
+
+unless-stopped : Always restart, unless explicitly stopped by user :- docker run --restart=unless-stopped nginx
+
+Docker Healthchecks - Monitoring Application Health
+
+What is a healthcheck ?
+
+	• A command Docker runs periodically to check if the container is health 
+
+	• Returns exit code 0 = 0 healthy, non-zero = unhealthy
+
+	• Can trigger restarts or alerts
+
+What this means:
+
+	• Check every 30 second
+
+	• Timeout after 3 seconds
+
+	• Fail after 3 consecutive failures
+
+	• Command: curl the app, exit 1 if it fails
+
+
+In Dockerfile:
+
+HEALTHCHECK --interval=30s --timeout=3s --retires=3s CMD curl -f http://localhost/  || exit 1
+
+
+
+
+
