@@ -170,7 +170,7 @@ Ex:
 	
 	Format:
 	
-	Docker inspect --format='{{.Network+.IPAddress}}' my-nginx
+	Docker inspect --format='{{.Network.IPAddress}}' my-nginx
 	
 	
 	Docker file
