@@ -1,0 +1,579 @@
+Final Project Structure
+
+kutu-production-app/
+│
+├── backend/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── server.js
+│
+├── frontend/
+│   ├── Dockerfile
+│   ├── index.html
+│   └── nginx.conf
+│
+└── .dockerignore
+
+🚀 Step 1 — Create Project Folder
+
+Run:
+mkdir kutu-production-app
+cd kutu-production-app
+
+🚀 Step 2 — Create Folders
+
+Run:
+mkdir backend frontend
+
+🚀 Step 3 — Verify
+
+Run:
+ls
+Expected:
+backend
+frontend
+
+🚀 Step 4 — Create Backend Files
+
+Go inside backend:
+cd backend
+
+🚀 Step 5 — Create package.json
+
+nano package.json
+Add:
+
+{
+  "name": "kutu-backend",
+  "version": "1.0.0",
+  "description": "Kutu Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}
+
+🚀 Step 6 — Create server.js
+
+nano server.js
+Add:
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const PORT = process.env.PORT || 5000;
+const NODE_ENV = process.env.NODE_ENV;
+
+app.post('/login', (req, res) => {
+
+    const { username } = req.body;
+
+    res.json({
+        message: `Welcome ${username}`,
+        environment: NODE_ENV
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Backend running on port ${PORT}`);
+});
+
+🚀 Step 7 — Create Backend .dockerignore
+
+Inside backend/:
+nano .dockerignore
+Add:
+node_modules
+npm-debug.log
+.git
+
+Save.
+
+🚀 Step 8 — Create Backend Dockerfile
+
+Still inside backend/:
+nano Dockerfile
+Now we’ll build it carefully.
+
+✅ Stage 1 — Builder Stage
+
+Add:
+FROM node:18-alpine AS builder
+
+🔍 Meaning
+This is:
+build stage
+named:
+builder
+Used for:
+installing dependencies
+preparing ap
+
+✅ Add ARG
+ARG VERSION=1.0
+
+✅ Add WORKDIR
+WORKDIR /app
+
+✅ Copy package.json
+COPY package.json .
+
+✅ Install Dependencies
+RUN npm install
+
+✅ Copy Remaining Files
+COPY . .
+
+
+🚀 Stage 2 — Production Stage
+
+Now add:
+
+FROM node:18-alpine
+
+🔥 Why another FROM?
+This creates:
+fresh clean production image
+without unnecessary build cache/files.
+This is called:
+🚀 Multi-stage Build
+
+Note: Very important Docker concept.
+
+✅ Add WORKDIR Again
+WORKDIR /app
+
+✅ Copy From Builder Stage
+COPY --from=builder /app /app
+
+🔍 Meaning
+Copy prepared app from:
+builder stage
+into final production image.
+
+✅ Add ENV Variables
+ENV NODE_ENV=production
+ENV PORT=5000
+
+✅ Expose Port
+EXPOSE 5000
+
+✅ CMD
+CMD ["npm", "start"]
+
+✅ Final Dockerfile
+
+You should now have:
+
+FROM node:18-alpine AS builder
+
+ARG VERSION=1.0
+
+WORKDIR /app
+
+COPY package.json .
+
+RUN npm install
+
+COPY . .
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app /app
+
+ENV NODE_ENV=production
+ENV PORT=5000
+
+EXPOSE 5000
+
+CMD ["npm", "start"]
+
+🚀 Step 9 — Build Backend Image
+
+Inside backend folder:
+docker build -t kutu-backend .
+
+🚀 Step 10 — Run Backend Container
+docker run -d --name backend-container -p 5000:5000 kutu-backend
+
+🚀 Step 11 — Verify Running
+docker ps
+
+🚀 Step 12 — Check Logs
+docker logs backend-container
+
+Expected:
+Backend running on port 5000
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+In normal Dockerfiles:
+Everything stays inside final image:
+
+npm cache
+temporary files
+build tools
+unwanted layers
+Result:
+
+larger image
+
+🚀 Solution → Multi-stage Build
+
+Docker allows:
+multiple FROM statements
+Each FROM creates a separate stage.
+
+📦 Stage 1 — Builder Stage
+FROM node:18-alpine AS builder
+This creates a temporary build environment.
+Think like:
+"Workspace for preparing application"
+Inside it:
+install dependencies
+build app
+prepare files
+
+🔍 What Happens Here
+
+WORKDIR /app
+COPY package.json .
+RUN npm install
+COPY . .
+
+Container filesystem becomes:
+
+/app
+ ├── node_modules
+ ├── package.json
+ ├── server.js
+
+This stage is named:
+builder
+
+🚀 Stage 2 — Production Stage
+
+Now:
+
+FROM node:18-alpine
+
+IMPORTANT:
+This starts a:
+completely fresh new image
+Previous stage does NOT automatically continue.
+
+Think like:
+new clean container
+
+🔥 Why Fresh Image?
+Because we only want:
+necessary application files
+clean production image
+
+NOT:
+temporary build files
+cache
+unnecessary layers
+
+✅ Then:
+WORKDIR /app
+
+Creates working directory in NEW image.
+Equivalent to:
+mkdir /app
+cd /app
+
+inside container.
+
+🚀 MOST IMPORTANT LINE
+COPY --from=builder /app /app
+
+🔍 Meaning
+
+This means:
+Copy files FROM builder stage
+📦 Source
+/app
+
+inside:
+builder stage
+
+📦 Destination
+/app
+inside:
+new production image
+🧠 Visual Understanding
+
+Stage 1 (builder)
+builder stage
+----------------
+/app
+ ├── node_modules
+ ├── package.json
+ ├── server.js
+Stage 2 (production)
+
+Starts EMPTY:
+production stage
+----------------
+(empty)
+
+Then:
+COPY --from=builder /app /app
+copies prepared application into final image.
+
+🚀 Why This Is Powerful
+
+Because:
+builder stage can contain extra tools
+final image remains clean/minimal
+
+This is EXTREMELY common in:
+
+React apps
+Angular apps
+Java apps
+Go apps
+Production CI/CD
+
+🔥 Real Production Example
+
+In React:
+Builder stage:
+npm install
+npm run build
+
+Final stage:
+only static HTML files copied to nginx
+Huge optimization.
+
+🧠 Important Concept
+
+Each FROM:
+
+resets filesystem
+creates new stage
+creates separate image layer chain
+
+So we explicitly transfer needed files using:
+COPY --from
+
+🚀 Simple Analogy
+
+Think like:
+Stage	Purpose
+
+Builder Kitchen	Prepare food
+Production Plate	Serve only final food
+
+You don’t serve:
+
+raw ingredients
+utensils
+garbage
+
+Only final clean output 👍
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+🚀 Next Logical Step
+
+Now we create the:
+
+🌐 Frontend Production Container
+
+using:
+
+HTML/CSS login page
+Nginx
+Production-style Docker image
+
+This will teach:
+
+static site serving
+frontend containerization
+Nginx image customization
+
+🚀 Step 1 — Go to Frontend Folder
+
+From project root:
+cd ~/kutu-production-app/frontend
+
+🚀 Step 2 — Create Login Page
+nano index.html
+
+Add:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kutu Login</title>
+    <style>
+        body{
+            font-family: Arial;
+            background:#f4f4f4;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
+
+        .login-box{
+            background:white;
+            padding:30px;
+            border-radius:10px;
+            width:300px;
+            box-shadow:0 0 10px rgba(0,0,0,0.1);
+        }
+
+        input{
+            width:100%;
+            padding:10px;
+            margin-top:10px;
+        }
+
+        button{
+            width:100%;
+            padding:10px;
+            margin-top:15px;
+            background:black;
+            color:white;
+            border:none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+
+    <h2>Kutu App Login</h2>
+
+    <form id="loginForm">
+
+        <input type="text" id="username" placeholder="Username" required>
+
+        <input type="password" id="password" placeholder="Password" required>
+
+        <button type="submit">Login</button>
+
+    </form>
+
+    <p id="message"></p>
+
+</div>
+
+<script>
+
+document.getElementById("loginForm")
+.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    const response = await fetch("http://localhost:5000/login", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            username,
+            password
+        })
+
+    });
+
+    const data = await response.json();
+
+    document.getElementById("message").innerText =
+        data.message + " (" + data.environment + ")";
+});
+
+</script>
+
+</body>
+</html>
+
+🚀 Step 3 — Create Nginx Config
+nano nginx.conf
+
+Add:
+
+server {
+
+    listen 80;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+
+}
+
+🚀 Step 4 — Create Frontend .dockerignore
+nano .dockerignore
+
+Add:
+.git
+
+🚀 Step 5 — Create Frontend Dockerfile
+nano Dockerfile
+
+Add:
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+COPY index.html .
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+🔥 Important Concept
+
+Here:
+
+Nginx serves static frontend
+Backend API runs separately
+Frontend calls backend using fetch()
+
+This is close to real production architecture.
+
+🚀 Step 6 — Build Frontend Image
+docker build -t kutu-frontend .
+
+🚀 Step 7 — Run Frontend Container
+docker run -d --name frontend-container -p 8080:80 kutu-frontend
+
+🌐 Step 8 — Open Browser
+http://localhost:8080
+
+OR VMware IP:
+http://<vm-ip>:8080
+
+🚀 Expected Flow
+Open login page
+Enter username/password
+Click login
+Frontend calls backend API
+Backend returns JSON response
+Message displayed on page
+
+You now have:
+
+🚀 Containerized frontend + backend architecture
+
