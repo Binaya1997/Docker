@@ -1,0 +1,433 @@
+# Docker PostgreSQL + Frontend Persistence Project
+
+## Goal
+
+Create:
+
+* Frontend website
+* Node.js backend API
+* PostgreSQL database container
+* Docker volume persistence
+
+Then:
+
+1. Enter data from website
+2. Store inside PostgreSQL
+3. Delete containers
+4. Recreate containers
+5. Verify data still exists
+
+---
+
+# Architecture
+
+```text
+Frontend (HTML)
+        ↓
+Backend API (Node.js)
+        ↓
+PostgreSQL Database
+        ↓
+Docker Volume
+```
+
+---
+
+# Step 1 — Create Project Folder
+
+```bash
+mkdir kutu-db-project
+cd kutu-db-project
+```
+
+---
+
+# Step 2 — Create Backend Folder
+
+```bash
+mkdir backend
+cd backend
+```
+
+---
+
+# Step 3 — Create package.json
+
+```bash
+nano package.json
+```
+
+Add:
+
+```json
+{
+  "name": "kutu-db-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "pg": "^8.11.3"
+  }
+}
+```
+
+---
+
+# Step 4 — Create server.js
+
+```bash
+nano server.js
+```
+
+Add:
+
+```javascript
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const pool = new Pool({
+    user: 'admin',
+    host: 'host.docker.internal',
+    database: 'kutu_db',
+    password: 'admin123',
+    port: 5432,
+});
+
+pool.query(`
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    name TEXT
+)
+`);
+
+app.post('/add-user', async (req, res) => {
+
+    const { name } = req.body;
+
+    await pool.query(
+        'INSERT INTO users(name) VALUES($1)',
+        [name]
+    );
+
+    res.send('User added successfully');
+});
+
+app.get('/users', async (req, res) => {
+
+    const result = await pool.query(
+        'SELECT * FROM users'
+    );
+
+    res.json(result.rows);
+});
+
+app.listen(5000, () => {
+    console.log('Backend running on port 5000');
+});
+```
+
+---
+
+# Step 5 — Create Backend Dockerfile
+
+```bash
+nano Dockerfile
+```
+
+Add:
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package.json .
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["npm", "start"]
+```
+
+---
+
+# Step 6 — Build Backend Image
+
+```bash
+docker build -t kutu-db-backend .
+```
+
+---
+
+# Step 7 — Go Back to Project Root
+
+```bash
+cd ..
+```
+
+---
+
+# Step 8 — Create Frontend Folder
+
+```bash
+mkdir frontend
+cd frontend
+```
+
+---
+
+# Step 9 — Create index.html
+
+```bash
+nano index.html
+```
+
+Add:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kutu DB App</title>
+</head>
+<body>
+
+<h2>Add User</h2>
+
+<input type="text" id="name" placeholder="Enter name">
+
+<button onclick="addUser()">Submit</button>
+
+<h2>Users</h2>
+
+<ul id="users"></ul>
+
+<script>
+
+async function addUser() {
+
+    const name = document.getElementById('name').value;
+
+    await fetch('http://<You_local_host_name>:5000/add-user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name })
+    });
+
+    loadUsers();
+}
+
+async function loadUsers() {
+
+    const response = await fetch('http://<You_local_host_name>:5000/users');
+
+    const users = await response.json();
+
+    const list = document.getElementById('users');
+
+    list.innerHTML = '';
+
+    users.forEach(user => {
+
+        const li = document.createElement('li');
+
+        li.innerText = user.name;
+
+        list.appendChild(li);
+    });
+}
+
+loadUsers();
+
+</script>
+
+</body>
+</html>
+```
+
+---
+
+# Step 10 — Create Frontend Dockerfile
+
+```bash
+nano Dockerfile
+```
+
+Add:
+
+```dockerfile
+FROM nginx:alpine
+
+COPY index.html /usr/share/nginx/html/index.html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+---
+
+# Step 11 — Build Frontend Image
+
+```bash
+docker build -t kutu-db-frontend .
+```
+
+---
+
+# Step 12 — Create PostgreSQL Volume
+
+```bash
+docker volume create postgres-data
+```
+
+---
+
+# Step 13 — Run PostgreSQL Container
+
+```bash
+docker run -d \
+--name postgres-container \
+-e POSTGRES_USER=admin \
+-e POSTGRES_PASSWORD=admin123 \
+-e POSTGRES_DB=kutu_db \
+-p 5432:5432 \
+-v postgres-data:/var/lib/postgresql/data \
+postgres:16
+```
+
+---
+
+# Step 14 — Run Backend Container
+
+Go to backend folder:
+
+```bash
+cd ../backend
+```
+
+Run:
+
+```bash
+docker run -d \
+--name backend-container \
+-p 5000:5000 \
+--add-host=host.docker.internal:host-gateway \
+kutu-db-backend
+```
+
+---
+
+# Step 15 — Run Frontend Container
+
+Go to frontend folder:
+
+```bash
+cd ../frontend
+```
+
+Run:
+
+```bash
+docker run -d \
+--name frontend-container \
+-p 8080:80 \
+kutu-db-frontend
+```
+
+---
+
+# Step 16 — Open Website
+
+Open:
+
+```text
+http://localhost:8080
+```
+
+OR:
+
+```text
+http://YOUR_VM_IP:8080
+```
+
+---
+
+# Step 17 — Test Persistence
+
+Add some users.
+
+Then remove containers:
+
+```bash
+docker rm -f frontend-container backend-container postgres-container
+```
+
+---
+
+# Step 18 — Recreate Containers
+
+Run PostgreSQL again:
+
+```bash
+docker run -d \
+--name postgres-container \
+-e POSTGRES_USER=admin \
+-e POSTGRES_PASSWORD=admin123 \
+-e POSTGRES_DB=kutu_db \
+-p 5432:5432 \
+-v postgres-data:/var/lib/postgresql/data \
+postgres:16
+```
+
+Run backend:
+
+```bash
+docker run -d \
+--name backend-container \
+-p 5000:5000 \
+--add-host=host.docker.internal:host-gateway \
+kutu-db-backend
+```
+
+Run frontend:
+
+```bash
+docker run -d \
+--name frontend-container \
+-p 8080:80 \
+kutu-db-frontend
+```
+
+---
+
+# Final Result
+
+Open website again.
+
+Your previously entered users should STILL exist.
+
+That proves:
+
+```text
+Docker volume persisted PostgreSQL database data.
+```
+
+---
+
+
